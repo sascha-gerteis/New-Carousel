@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aquaverse Carousel Generator</title>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0a1929;
+            --bg-secondary: #112240;
+            --bg-glass: rgba(17, 34, 64, 0.7);
+            --accent-blue: #00a8ff;
+            --accent-aqua: #00ffcc;
+            --text-primary: #e6f1ff;
+            --text-secondary: #8892b0;
+            --border: #233554;
+            --success: #00ff9d;
+            --error: #ff4757;
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(0, 168, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 255, 204, 0.1) 0%, transparent 50%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-aqua));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 168, 255, 0.2);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin: 40px 0 20px;
+            color: var(--accent-aqua);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .count-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .count-btn {
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .count-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .count-btn.active {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-aqua));
+            color: var(--bg-primary);
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(0, 168, 255, 0.3);
+        }
+
+        .slides-container {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .slide-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            border-radius: var(--card-radius);
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+            will-change: transform;
+            contain: layout style paint;
+        }
+
+        .slide-card:hover {
+            border-color: rgba(0, 168, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 168, 255, 0.1);
+        }
+
+        .slide-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .slide-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slide-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .slide-status.complete {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .slide-content {
+            display: grid;
+            gap: 25px;
+        }
+
+        .selection-group {
+            margin-bottom: 10px;
+        }
+
+        .selection-label {
+            display: block;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--accent-aqua);
+        }
+
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .selection-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+
+        .selection-item {
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+            contain: layout style paint;
+        }
+
+        .selection-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+
+        .selection-item.selected {
+            border-color: var(--accent-aqua);
+            box-shadow: 0 0 0 3px rgba(0, 255, 204, 0.2);
+        }
+
+        .selection-img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            display: block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        .selection-name {
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .prompt-container {
+            margin-top: 10px;
+        }
+
+        .prompt-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--accent-aqua);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: vertical;
+            transition: var(--transition);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 168, 255, 0.2);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 140px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-aqua));
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 168, 255, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            min-width: auto;
+        }
+
+        /* Results Section */
+        .results-section {
+            margin-top: 50px;
+            padding: 30px;
+            background: var(--bg-glass);
+            border-radius: var(--card-radius);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .results-section.visible {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .images-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-card {
+            background: var(--bg-secondary);
+            border-radius: var(--card-radius);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 10px 30px rgba(0, 168, 255, 0.2);
+        }
+
+        .result-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .result-info {
+            padding: 20px;
+        }
+
+        .result-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--accent-aqua);
+        }
+
+        .result-prompt {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-aqua));
+            color: var(--bg-primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 168, 255, 0.3);
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            max-width: 500px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            z-index: 1000;
+            white-space: pre-line;
+            text-align: left;
+            line-height: 1.6;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast-success {
+            background: rgba(0, 255, 157, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast-error {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide-card.collapsed .slide-content {
+            display: none;
+        }
+
+        .slide-card.collapsed .slide-header {
+            margin-bottom: 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-aqua);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--bg-secondary);
+            border-radius: 2px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-aqua));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Aquaverse Carousel Generator</h1>
+            <div class="count-selector" id="countSelector">
+                <!-- Count buttons will be generated here -->
+            </div>
+        </header>
+
+        <main class="slides-container" id="slidesContainer">
+            <!-- Slides will be generated here -->
+        </main>
+
+        <footer class="action-buttons">
+            <button id="sendBtn" class="btn btn-primary">Generate Images</button>
+            <button id="resetBtn" class="btn btn-secondary">Reset All</button>
+        </footer>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Generating your images... This may take a moment.</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="progress-text" id="progressText">Sending request to AI service...</p>
+        </div>
+
+        <section class="results-section" id="resultsSection">
+            <div class="results-header">
+                <h2>Generated Images</h2>
+                <div class="results-actions">
+                    <button id="downloadAllBtn" class="btn btn-primary btn-small">
+                        📥 Download All
+                    </button>
+                    <button id="clearResultsBtn" class="btn btn-secondary btn-small">
+                        Clear Results
+                    </button>
+                </div>
+            </div>
+            <div class="images-grid" id="imagesGrid">
+                <!-- Results will be displayed here -->
+            </div>
+        </section>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://merpsvkfmjbugrgnwwlq.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_HTUvRzrVGDFbqLxrUCCMZQ_tY_oW4zJ';
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Configuration
+        const WEBHOOK_URL = 'https://saschag.app.n8n.cloud/webhook/new-carousel';
+        
+        const MODEL_IMAGES = [
+            { name: "Indian Broad", url: "https://columbiapicturesaquaverse.canto.global/direct/image/bn3i9t221t0s5bqrcc5hbplb3k/RJOnJ1mIfiOXU86emaTTPXNoHfc/original?content-type=image%2Fjpeg&name=indian_female.jpg" },
+            { name: "North Indian Couple", url: "https://columbiapicturesaquaverse.canto.global/direct/image/hb6g438no94hj9vme7t4bnpa7b/SeioQxFfSkGVCHFGnNJ5FOJXbMc/original?content-type=image%2Fjpeg&name=north+indian+couple.jpg" },
+            { name: "South Indian Couple", url: "https://columbiapicturesaquaverse.canto.global/direct/image/iu6m9fmr2l4id1t5pv8b8c1q2h/mKWG4ymhx_xQTiVxBzwIjeFArfE/original?content-type=image%2Fjpeg&name=south_indian_couple.jpg" },
+            { name: "Korean Male", url: "https://columbiapicturesaquaverse.canto.global/direct/image/p4n5muh20l5kbbb953s6t5qh54/dtn2Y0k_fJQnwT7Fvi0_GXVWczs/original?content-type=image%2Fjpeg&name=korean_male.jpg" },
+            { name: "Korean Female", url: "https://columbiapicturesaquaverse.canto.global/direct/image/dbm70u5k6l0ubbo1j2gsgaca1j/JKsS5mYOLnoVHFR0E3igmXYA1jk/original?content-type=image%2Fjpeg&name=korean_female.jpg" },
+            { name: "Thai Male", url: "https://columbiapicturesaquaverse.canto.global/direct/image/oe9u0sbrfl3276l37lr97vtr4c/UVxXSR0bFF815sahzCz68AObOkA/original?content-type=image%2Fpng&name=thai_male.png" },
+            { name: "Thai Female", url: "https://columbiapicturesaquaverse.canto.global/direct/image/je3ka484b50lp653pcs16b545d/SXv8Ow4PQvyBbbjEeMrFQN3b8nc/original?content-type=image%2Fpng&name=thai_female.png" },
+            { name: "North Indian Female Group", url: "https://columbiapicturesaquaverse.canto.global/direct/image/h58kd5sj6t6r169r6q5o41pf5a/-CC4_XvW_cyaBuH60t_PucFrrYg/original?content-type=image%2Fjpeg&name=north_indian_female+group.png.jpg" }
+        ];
+
+        const BACKGROUND_IMAGES = [
+            { name: "Jumanji Slide", url: "https://columbiapicturesaquaverse.canto.global/direct/image/tvdoc7kbct5l96ro5nc7j7gr20/9ASov9uX-4CSd9fzl2I3h0fxcVY/original?content-type=image%2Fjpeg&name=DSC06472.JPG" },
+            { name: "Wavepool", url: "https://columbiapicturesaquaverse.canto.global/direct/image/ccj1g61c0p3413a98v70ce4q1v/16Mukb9S8bO-mUEDCxrePc4ps3k/original?content-type=image%2Fjpeg&name=440384096_1005176187657849_1264903979187751479_n.jpg" },
+            { name: "Gokart", url: "https://columbiapicturesaquaverse.canto.global/direct/image/il1vl2182h76tai9gnvebcb57b/cv8wIIaA4Jd8YrgWdT9vGrETmdA/original?content-type=image%2Fjpeg&name=439338169_10160935124988954_6765381360781349505_n.jpg" },
+            { name: "Onsen", url: "https://columbiapicturesaquaverse.canto.global/direct/image/o3dsqfp5j55m9314r8s6ismi1q/J7QYmqvbiBfFcMstAm4KY5lJfzg/original?content-type=image%2Fjpeg&name=DSC03412.JPG" },
+            { name: "Minigolf", url: "https://columbiapicturesaquaverse.canto.global/direct/image/nm9n02e15l04r8jf0aqnkdjk52/cyOc5VX-wlHfUk-JONYeQ8X8ens/original?content-type=image%2Fjpeg&name=DSC06438+%281%29-min.JPG" },
+            { name: "Lawn", url: "https://columbiapicturesaquaverse.canto.global/direct/image/o4of86ganh49bem5gh5fsqfr2s/ddAH1FCdlNO6yXPC8Ho7ESn5IrQ/original?content-type=image%2Fjpeg&name=DSC02453-min.JPG" },
+            { name: "Walkway", url: "https://columbiapicturesaquaverse.canto.global/direct/image/avlbr1kla116fe1bka590dvd04/ZpZUEs0dBcf4tAmbsR3scJ74PsE/original?content-type=image%2Fjpeg&name=DSC06276.JPG" },
+            { name: "Lazy River", url: "https://columbiapicturesaquaverse.canto.global/direct/image/2ualctcm8p2cda2g8hfl34010u/vfNkNJkhASnNkLnnLRXtivc90B4/original?content-type=image%2Fjpeg&name=DSC06460.JPG" },
+            { name: "Cloudy", url: "https://columbiapicturesaquaverse.canto.global/direct/image/8ap7ibkh9t7tdf1juh5sk6oh75/3rbx8P9REpoQpM1IiNPlT_-sD58/original?content-type=image%2Fjpeg&name=DSC06268.JPG" }
+        ];
+
+        // State
+        const state = {
+            imageCount: 1,
+            slides: [
+                { modelImageUrl: null, backgroundImageUrl: null, prompt: "" }
+            ],
+            generatedImages: []
+        };
+
+        // DOM Elements
+        let countSelector, slidesContainer, sendBtn, resetBtn, toast;
+        let resultsSection, imagesGrid, loading, downloadAllBtn, clearResultsBtn;
+        let progressFill, progressText;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            countSelector = document.getElementById('countSelector');
+            slidesContainer = document.getElementById('slidesContainer');
+            sendBtn = document.getElementById('sendBtn');
+            resetBtn = document.getElementById('resetBtn');
+            toast = document.getElementById('toast');
+            resultsSection = document.getElementById('resultsSection');
+            imagesGrid = document.getElementById('imagesGrid');
+            loading = document.getElementById('loading');
+            downloadAllBtn = document.getElementById('downloadAllBtn');
+            clearResultsBtn = document.getElementById('clearResultsBtn');
+            progressFill = document.getElementById('progressFill');
+            progressText = document.getElementById('progressText');
+
+            initImageObserver();
+            initCountSelector();
+            renderSlides();
+            attachEventListeners();
+        });
+
+        // Initialize count selector buttons
+        function initCountSelector() {
+            for (let i = 1; i <= 6; i++) {
+                const btn = document.createElement('button');
+                btn.className = `count-btn ${i === 1 ? 'active' : ''}`;
+                btn.textContent = `${i} Image${i > 1 ? 's' : ''}`;
+                btn.dataset.count = i;
+                countSelector.appendChild(btn);
+            }
+        }
+
+        // Render slides based on state
+        function renderSlides() {
+            // Use DocumentFragment for better performance
+            const fragment = document.createDocumentFragment();
+            
+            for (let i = 0; i < state.imageCount; i++) {
+                const slide = state.slides[i] || createEmptySlide();
+                const slideElement = createSlideElement(i + 1, slide);
+                fragment.appendChild(slideElement);
+            }
+            
+            // Use requestAnimationFrame to batch DOM updates
+            requestAnimationFrame(() => {
+                slidesContainer.innerHTML = '';
+                slidesContainer.appendChild(fragment);
+            });
+        }
+
+        // Create empty slide object
+        function createEmptySlide() {
+            return { modelImageUrl: null, backgroundImageUrl: null, prompt: "" };
+        }
+
+        // Create slide DOM element
+        function createSlideElement(index, slide) {
+            const card = document.createElement('div');
+            card.className = 'slide-card';
+            card.dataset.index = index - 1;
+
+            const isComplete = slide.modelImageUrl && slide.backgroundImageUrl && slide.prompt.trim();
+            
+            // Use data-src for lazy loading
+            const createImageHTML = (images, selectedUrl, loadEager) => {
+                return images.map((item, idx) => {
+                    const isSelected = selectedUrl === item.url;
+                    const shouldLoadEager = loadEager && idx < 3;
+                    
+                    return `
+                        <div class="selection-item ${isSelected ? 'selected' : ''}" 
+                             data-url="${item.url}" 
+                             data-name="${item.name}">
+                            <img src="${item.url}" 
+                                 alt="${item.name}" 
+                                 class="selection-img" 
+                                 loading="${shouldLoadEager ? 'eager' : 'lazy'}"
+                                 decoding="async"
+                                 onerror="this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop'">
+                            <div class="selection-name">${item.name}</div>
+                        </div>
+                    `;
+                }).join('');
+            };
+            
+            card.innerHTML = `
+                <div class="slide-header">
+                    <div class="slide-title">
+                        Slide ${index}
+                        <div class="slide-status ${isComplete ? 'complete' : ''}"></div>
+                    </div>
+                    <span>▼</span>
+                </div>
+                <div class="slide-content">
+                    <div class="selection-group">
+                        <label class="selection-label">Select Model</label>
+                        <div class="selection-grid" data-type="model">
+                            ${createImageHTML(MODEL_IMAGES, slide.modelImageUrl, index === 1)}
+                        </div>
+                    </div>
+                    
+                    <div class="selection-group">
+                        <label class="selection-label">Select Background</label>
+                        <div class="selection-grid" data-type="background">
+                            ${createImageHTML(BACKGROUND_IMAGES, slide.backgroundImageUrl, index === 1)}
+                        </div>
+                    </div>
+                    
+                    <div class="prompt-container">
+                        <label class="prompt-label">Prompt</label>
+                        <textarea placeholder="Describe your image..." 
+                                  data-index="${index - 1}">${slide.prompt || ''}</textarea>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Intersection Observer for lazy loading images
+        let imageObserver;
+        function initImageObserver() {
+            if ('IntersectionObserver' in window) {
+                imageObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            if (img.dataset.src) {
+                                img.src = img.dataset.src;
+                                img.removeAttribute('data-src');
+                                imageObserver.unobserve(img);
+                            }
+                        }
+                    });
+                }, {
+                    rootMargin: '50px'
+                });
+            }
+        }
+
+        // Debounce function for performance
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Attach event listeners
+        function attachEventListeners() {
+            // Count selector
+            countSelector.addEventListener('click', e => {
+                const btn = e.target.closest('.count-btn');
+                if (!btn) return;
+                
+                const newCount = parseInt(btn.dataset.count);
+                if (newCount === state.imageCount) return;
+                
+                document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                state.imageCount = newCount;
+                
+                if (newCount > state.slides.length) {
+                    for (let i = state.slides.length; i < newCount; i++) {
+                        state.slides.push(createEmptySlide());
+                    }
+                } else {
+                    state.slides = state.slides.slice(0, newCount);
+                }
+                
+                renderSlides();
+            });
+
+            // Slide selection - optimize with minimal DOM queries
+            slidesContainer.addEventListener('click', e => {
+                const selectionItem = e.target.closest('.selection-item');
+                if (!selectionItem) return;
+                
+                e.preventDefault(); // Prevent default immediately
+                
+                const slideCard = selectionItem.closest('.slide-card');
+                const slideIndex = parseInt(slideCard.dataset.index);
+                const grid = selectionItem.parentElement;
+                const selectionType = grid.dataset.type;
+                
+                // Update state first
+                if (selectionType === 'model') {
+                    state.slides[slideIndex].modelImageUrl = selectionItem.dataset.url;
+                } else {
+                    state.slides[slideIndex].backgroundImageUrl = selectionItem.dataset.url;
+                }
+                
+                // Batch all DOM updates in single animation frame
+                requestAnimationFrame(() => {
+                    // Use class toggle instead of removing all then adding
+                    const currentSelected = grid.querySelector('.selection-item.selected');
+                    if (currentSelected && currentSelected !== selectionItem) {
+                        currentSelected.classList.remove('selected');
+                    }
+                    selectionItem.classList.add('selected');
+                    
+                    // Update status in same frame
+                    const slide = state.slides[slideIndex];
+                    const isComplete = slide.modelImageUrl && slide.backgroundImageUrl && slide.prompt.trim();
+                    const statusEl = slideCard.querySelector('.slide-status');
+                    if (statusEl) {
+                        statusEl.classList.toggle('complete', isComplete);
+                    }
+                });
+            }, { passive: false });
+
+            // Prompt input with debounce
+            const debouncedPromptUpdate = debounce((slideIndex, value) => {
+                state.slides[slideIndex].prompt = value;
+                updateSlideStatus(slideIndex);
+            }, 300);
+
+            slidesContainer.addEventListener('input', e => {
+                if (e.target.tagName !== 'TEXTAREA') return;
+                
+                const slideIndex = parseInt(e.target.dataset.index);
+                debouncedPromptUpdate(slideIndex, e.target.value);
+            });
+
+            // Slide header collapse
+            slidesContainer.addEventListener('click', e => {
+                const header = e.target.closest('.slide-header');
+                if (!header) return;
+                
+                const card = header.closest('.slide-card');
+                card.classList.toggle('collapsed');
+                
+                const arrow = header.querySelector('span');
+                arrow.textContent = card.classList.contains('collapsed') ? '▶' : '▼';
+            });
+
+            // Send button
+            sendBtn.addEventListener('click', generateImages);
+
+            // Reset button
+            resetBtn.addEventListener('click', resetAll);
+
+            // Download all button
+            downloadAllBtn.addEventListener('click', downloadAllImages);
+
+            // Clear results button
+            clearResultsBtn.addEventListener('click', clearResults);
+        }
+
+        // Update slide status indicator
+        function updateSlideStatus(index) {
+            const slide = state.slides[index];
+            const isComplete = slide.modelImageUrl && slide.backgroundImageUrl && slide.prompt.trim();
+            
+            // Use requestAnimationFrame for smoother updates
+            requestAnimationFrame(() => {
+                const card = document.querySelector(`.slide-card[data-index="${index}"]`);
+                if (!card) return;
+                
+                const status = card.querySelector('.slide-status');
+                if (status) {
+                    status.classList.toggle('complete', isComplete);
+                }
+            });
+        }
+
+        // Update progress
+        function updateProgress(percent, message) {
+            progressFill.style.width = `${percent}%`;
+            progressText.textContent = message;
+        }
+
+        // Validate before sending
+        function validate() {
+            if (state.imageCount === 1) {
+                const slide = state.slides[0];
+                if (!slide.modelImageUrl || !slide.backgroundImageUrl || !slide.prompt.trim()) {
+                    showToast('Please complete Slide 1: missing model/background/prompt', 'error');
+                    return false;
+                }
+                return true;
+            }
+            
+            for (let i = 0; i < state.imageCount; i++) {
+                const slide = state.slides[i];
+                const missing = [];
+                
+                if (!slide.modelImageUrl) missing.push('model');
+                if (!slide.backgroundImageUrl) missing.push('background');
+                if (!slide.prompt.trim()) missing.push('prompt');
+                
+                if (missing.length > 0) {
+                    showToast(`Slide ${i + 1} is missing: ${missing.join('/')}`, 'error');
+                    
+                    const card = document.querySelector(`.slide-card[data-index="${i}"]`);
+                    if (card) {
+                        card.classList.remove('collapsed');
+                        card.querySelector('span').textContent = '▼';
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // Generate images - NEW ASYNC POLLING SYSTEM
+        async function generateImages() {
+            if (!validate()) return;
+            
+            const payload = {
+                imageCount: state.imageCount,
+                slides: state.slides.map((slide, index) => ({
+                    index: index + 1,
+                    modelImageUrl: slide.modelImageUrl,
+                    backgroundImageUrl: slide.backgroundImageUrl,
+                    prompt: slide.prompt
+                }))
+            };
+            
+            console.log('Sending payload for', state.imageCount, 'slides:', payload);
+            
+            // Show loading
+            loading.classList.add('visible');
+            updateProgress(10, 'Submitting request...');
+            sendBtn.disabled = true;
+            resetBtn.disabled = true;
+            resultsSection.classList.remove('visible');
+            state.generatedImages = [];
+            
+            try {
+                // Step 1: Submit to webhook - expect requestId back immediately
+                updateProgress(20, 'Connecting to AI service...');
+                console.log('Sending to webhook:', WEBHOOK_URL);
+                
+                const submitResponse = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!submitResponse.ok) {
+                    throw new Error(`Failed to submit request: ${submitResponse.statusText}`);
+                }
+                
+                const responseData = await submitResponse.json();
+                console.log('Webhook response:', responseData);
+                
+                // Extract requestId from response
+                const requestId = responseData.requestId || responseData.id || responseData.taskId;
+                
+                if (!requestId) {
+                    throw new Error('No requestId received from webhook');
+                }
+                
+                console.log('✅ Request submitted successfully! ID:', requestId);
+                updateProgress(30, `Request submitted (ID: ${requestId}). AI is processing in background...`);
+                
+                // Step 2: Start polling Supabase for completion
+                await pollTaskStatus(requestId);
+                
+            } catch (error) {
+                console.error('Error generating images:', error);
+                showToast(`Failed: ${error.message}`, 'error');
+                
+            } finally {
+                setTimeout(() => {
+                    loading.classList.remove('visible');
+                    sendBtn.disabled = false;
+                    resetBtn.disabled = false;
+                    updateProgress(0, '');
+                }, 1500);
+            }
+        }
+        
+        // Poll Supabase carousel_tasks table for completion
+        async function pollTaskStatus(requestId) {
+            console.log('🔄 Starting to poll for task:', requestId);
+            
+            let attempts = 0;
+            const maxAttempts = 360; // 30 minutes (5 sec * 360)
+            const pollInterval = 5000; // 5 seconds
+            
+            while (attempts < maxAttempts) {
+                attempts++;
+                
+                // Update progress
+                const elapsedMinutes = Math.floor((attempts * pollInterval) / 60000);
+                const progressPercent = Math.min(90, 30 + (attempts / maxAttempts * 60));
+                updateProgress(
+                    progressPercent, 
+                    `Processing ${state.imageCount} slide(s)... ${elapsedMinutes} min elapsed. Please wait...`
+                );
+                
+                try {
+                    // Query Supabase for task status
+                    const { data, error } = await supabaseClient
+                        .from('carousel_tasks')
+                        .select('*')
+                        .eq('id', requestId)
+                        .single();
+                    
+                    if (error) {
+                        console.warn(`Poll attempt ${attempts}: Error -`, error.message);
+                    } else if (data) {
+                        console.log(`Poll attempt ${attempts}:`, data);
+                        
+                        if (data.status === 'completed') {
+                            console.log('✅ Task completed!', data);
+                            updateProgress(95, 'AI processing complete! Loading images...');
+                            
+                            // Extract image URLs from completed task
+                            await displayCompletedImages(data);
+                            return; // Exit polling
+                            
+                        } else if (data.status === 'failed') {
+                            throw new Error(`Task failed: ${data.error_message || 'Unknown error'}`);
+                            
+                        } else if (data.status === 'processing') {
+                            // Still processing - show progress if available
+                            const currentSlide = data.current_slide || '?';
+                            updateProgress(
+                                progressPercent,
+                                `Processing slide ${currentSlide} of ${state.imageCount}... ${elapsedMinutes} min`
+                            );
+                        }
+                    } else {
+                        console.warn(`Poll attempt ${attempts}: No data found for requestId ${requestId}`);
+                    }
+                    
+                } catch (pollError) {
+                    console.error(`Poll error at attempt ${attempts}:`, pollError);
+                }
+                
+                // Wait before next poll
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
+            }
+            
+            // Timeout after max attempts
+            throw new Error(`⏱️ Timeout: Task did not complete within 30 minutes`);
+        }
+        
+        // Display completed images from Supabase task
+        async function displayCompletedImages(taskData) {
+            console.log('📸 Displaying completed images:', taskData);
+            
+            state.generatedImages = [];
+            
+            // Extract URLs from taskData (url_1, url_2, url_3, etc.)
+            const imageUrls = [];
+            for (let i = 1; i <= 6; i++) {
+                const urlKey = `url_${i}`;
+                if (taskData[urlKey]) {
+                    imageUrls.push({
+                        url: taskData[urlKey],
+                        index: i,
+                        prompt: state.slides[i - 1]?.prompt || `Slide ${i}`
+                    });
+                }
+            }
+            
+            if (imageUrls.length === 0) {
+                throw new Error('No image URLs found in completed task');
+            }
+            
+            updateProgress(96, `Downloading ${imageUrls.length} image(s)...`);
+            
+            // Download each image
+            for (let i = 0; i < imageUrls.length; i++) {
+                const item = imageUrls[i];
+                
+                try {
+                    const imageResponse = await fetch(item.url);
+                    
+                    if (!imageResponse.ok) {
+                        throw new Error(`Failed to download image ${item.index}`);
+                    }
+                    
+                    const imageBlob = await imageResponse.blob();
+                    const imageBlobUrl = URL.createObjectURL(imageBlob);
+                    
+                    state.generatedImages.push({
+                        url: imageBlobUrl,
+                        blob: imageBlob,
+                        filename: `aquaverse-slide-${item.index}.png`,
+                        prompt: item.prompt,
+                        index: item.index,
+                        success: true
+                    });
+                    
+                } catch (err) {
+                    console.error(`Failed to download image ${item.index}:`, err);
+                    state.generatedImages.push({
+                        url: null,
+                        prompt: item.prompt,
+                        index: item.index,
+                        error: err.message,
+                        success: false
+                    });
+                }
+                
+                updateProgress(
+                    96 + Math.floor((i + 1) / imageUrls.length * 3),
+                    `Downloaded ${i + 1} of ${imageUrls.length} images...`
+                );
+            }
+            
+            updateProgress(100, 'Complete!');
+            
+            const successfulCount = state.generatedImages.filter(img => img.success).length;
+            
+            setTimeout(() => {
+                displayResults();
+                if (successfulCount === state.imageCount) {
+                    showToast(`✅ Successfully generated all ${state.imageCount} images!`, 'success');
+                } else {
+                    showToast(
+                        `Generated ${successfulCount} of ${state.imageCount} images. Some failed.`,
+                        successfulCount > 0 ? 'success' : 'error'
+                    );
+                }
+            }, 500);
+        }
+
+        // Display results in the UI
+        // Display results in the UI
+        function displayResults() {
+            imagesGrid.innerHTML = '';
+            
+            if (state.generatedImages.length === 0) {
+                imagesGrid.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                        <p>No images generated yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Create image cards for each generated image
+            state.generatedImages.forEach(imageData => {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                
+                card.innerHTML = `
+                    <img src="${imageData.url}" alt="Slide ${imageData.index}" class="result-image">
+                    <div class="result-info">
+                        <h3>Slide ${imageData.index}</h3>
+                        <p class="result-prompt">${imageData.prompt}</p>
+                        ${imageData.error ? `<p class="error-text">⚠️ ${imageData.error}</p>` : ''}
+                        <button class="btn-download" onclick="downloadImage(${imageData.index - 1})">
+                            📥 Download
+                        </button>
+                    </div>
+                `;
+                
+                imagesGrid.appendChild(card);
+            });
+            
+            // Show results section
+            resultsSection.classList.add('visible');
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Show mock results for demo
+        function showMockResults() {
+            state.generatedImages = state.slides.map((slide, index) => {
+                const mockUrl = `https://picsum.photos/seed/aquaverse-${Date.now()}-${index}/400/250`;
+                
+                return {
+                    url: mockUrl,
+                    prompt: slide.prompt || `Generated Image ${index + 1}`,
+                    index: index + 1,
+                    filename: `aquaverse-slide-${index + 1}.jpg`,
+                    success: true
+                };
+            });
+            
+            displayResults();
+        }
+
+        // Download a single item
+        function downloadItem(index) {
+            const item = state.generatedImages[index];
+            
+            if (!item) {
+                showToast('Item not found', 'error');
+                return;
+            }
+            
+            if (item.blob) {
+                // Download from blob
+                const url = URL.createObjectURL(item.blob);
+                const a = document.createElement('a');
+                
+                a.href = url;
+                a.download = item.filename || `aquaverse-slide-${item.index}.png`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                
+                showToast(`Downloading ${item.filename}...`, 'success');
+            } else if (item.url) {
+                // Download from URL (mock images or placeholders)
+                const a = document.createElement('a');
+                a.href = item.url;
+                a.download = item.filename || `aquaverse-slide-${item.index}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                showToast(`Downloading image ${item.index}...`, 'success');
+            }
+        }
+
+        // Download all images
+        function downloadAllImages() {
+            if (state.generatedImages.length === 0) {
+                showToast('No images to download', 'error');
+                return;
+            }
+            
+            // Filter to only successful images
+            const successfulImages = state.generatedImages.filter(img => img.success);
+            
+            if (successfulImages.length === 0) {
+                showToast('No successful images to download', 'error');
+                return;
+            }
+            
+            if (successfulImages.length === 1) {
+                const index = state.generatedImages.findIndex(img => img.success);
+                downloadItem(index);
+                return;
+            }
+            
+            showToast(`Starting download of ${successfulImages.length} images...`, 'success');
+            
+            successfulImages.forEach((item, arrayIndex) => {
+                const index = state.generatedImages.findIndex(img => img === item);
+                setTimeout(() => {
+                    downloadItem(index);
+                }, arrayIndex * 300);
+            });
+        }
+
+        // Clear results
+        function clearResults() {
+            // Revoke object URLs to free memory
+            state.generatedImages.forEach(item => {
+                if (item.url && item.url.startsWith('blob:')) {
+                    URL.revokeObjectURL(item.url);
+                }
+            });
+            
+            state.generatedImages = [];
+            
+            imagesGrid.innerHTML = '';
+            resultsSection.classList.remove('visible');
+            showToast('Results cleared', 'success');
+        }
+
+        // Reset all
+        function resetAll() {
+            clearResults();
+            
+            state.imageCount = 1;
+            state.slides = [createEmptySlide()];
+            
+            document.querySelectorAll('.count-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === 0);
+            });
+            
+            renderSlides();
+            showToast('All slides reset', 'success');
+        }
+
+        // Show toast notification
+        function showToast(message, type) {
+            toast.textContent = message;
+            toast.className = '';
+            
+            void toast.offsetWidth;
+            
+            toast.classList.add(`toast-${type}`);
+            
+            setTimeout(() => {
+                toast.classList.remove(`toast-${type}`);
+            }, 4000);
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
