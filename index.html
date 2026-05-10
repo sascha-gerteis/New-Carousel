@@ -429,6 +429,168 @@
             box-shadow: 0 5px 15px rgba(0, 168, 255, 0.3);
         }
 
+
+        .btn-video {
+            background: rgba(0, 168, 255, 0.12);
+            color: var(--accent-aqua);
+            border: 1px solid rgba(0, 255, 204, 0.35);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+        }
+
+        .btn-video:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: var(--accent-aqua);
+            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.18);
+        }
+
+        .btn-video:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .video-status-box {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.18);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .video-preview {
+            width: 100%;
+            margin-top: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #000;
+            display: block;
+        }
+
+        .video-meta {
+            margin-top: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 999;
+        }
+
+        .modal-backdrop.visible {
+            display: flex;
+        }
+
+        .modal-card {
+            width: min(720px, 100%);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--card-radius);
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45);
+            overflow: hidden;
+        }
+
+        .modal-header,
+        .modal-body,
+        .modal-footer {
+            padding: 20px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .modal-header h3 {
+            color: var(--accent-aqua);
+        }
+
+        .modal-close {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .modal-image-preview {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
+        }
+
+        .field-group {
+            margin-bottom: 18px;
+        }
+
+        .field-label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--accent-aqua);
+            font-weight: 500;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 168, 255, 0.2);
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        @media (max-width: 680px) {
+            .modal-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
         #toast {
             position: fixed;
             bottom: 20px;
@@ -568,6 +730,41 @@
         </section>
     </div>
 
+
+    <div class="modal-backdrop" id="videoModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Turn Image into Video</h3>
+                <button class="modal-close" id="videoModalClose" type="button">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-grid">
+                    <img id="videoModalImage" class="modal-image-preview" alt="Selected generated image">
+                    <div>
+                        <div class="field-group">
+                            <label class="field-label" for="videoPrompt">Video Prompt</label>
+                            <textarea id="videoPrompt" placeholder="Example: The influencer smiles at the camera, water splashes in the background, cinematic handheld motion, realistic lighting."></textarea>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="videoLength">Video Length</label>
+                            <select id="videoLength">
+                                <option value="5">5 seconds</option>
+                                <option value="10" selected>10 seconds</option>
+                                <option value="15">15 seconds</option>
+                            </select>
+                        </div>
+                        <p class="video-meta">The selected generated image will be sent to your video automation as the first frame/reference image.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="videoCancelBtn" class="btn btn-secondary" type="button">Cancel</button>
+                <button id="videoSubmitBtn" class="btn btn-primary" type="button">Generate Video</button>
+            </div>
+        </div>
+    </div>
+
+
     <div id="toast"></div>
 
     <script>
@@ -579,6 +776,13 @@
         
         // Configuration
         const WEBHOOK_URL = 'https://saschag.app.n8n.cloud/webhook/new-carousel';
+        const VIDEO_WEBHOOK_URL = 'https://saschag.app.n8n.cloud/webhook/new-video';
+        // Video workflow uses the same Supabase task table as image generation.
+        // The completed video URL is expected in url_1, url_2, etc., just like image outputs.
+        const CAROUSEL_TASKS_TABLE = 'carousel_tasks';
+        const VIDEO_TASKS_TABLE = 'video_tasks'; // fallback only
+        const VIDEO_ASSETS_TABLE = 'generated_assets'; // fallback only
+        const VIDEO_POLL_INTERVAL_MS = 5000;
         
         const MODEL_IMAGES = [
             { name: "Indian Broad", url: "https://columbiapicturesaquaverse.canto.global/direct/image/bn3i9t221t0s5bqrcc5hbplb3k/RJOnJ1mIfiOXU86emaTTPXNoHfc/original?content-type=image%2Fjpeg&name=indian_female.jpg" },
@@ -625,13 +829,16 @@
             slides: [
                 { modelImageUrl: null, backgroundImageUrl: null, prompt: "" }
             ],
-            generatedImages: []
+            generatedImages: [],
+            activeVideoImageIndex: null,
+            activeVideoPolls: new Set()
         };
 
         // DOM Elements
         let countSelector, slidesContainer, sendBtn, resetBtn, toast;
         let resultsSection, imagesGrid, loading, downloadAllBtn, clearResultsBtn;
         let progressFill, progressText;
+        let videoModal, videoModalImage, videoPrompt, videoLength, videoSubmitBtn, videoCancelBtn, videoModalClose;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -647,6 +854,13 @@
             clearResultsBtn = document.getElementById('clearResultsBtn');
             progressFill = document.getElementById('progressFill');
             progressText = document.getElementById('progressText');
+            videoModal = document.getElementById('videoModal');
+            videoModalImage = document.getElementById('videoModalImage');
+            videoPrompt = document.getElementById('videoPrompt');
+            videoLength = document.getElementById('videoLength');
+            videoSubmitBtn = document.getElementById('videoSubmitBtn');
+            videoCancelBtn = document.getElementById('videoCancelBtn');
+            videoModalClose = document.getElementById('videoModalClose');
 
             initImageObserver();
             initCountSelector();
@@ -886,6 +1100,13 @@
 
             // Clear results button
             clearResultsBtn.addEventListener('click', clearResults);
+
+            videoSubmitBtn.addEventListener('click', submitVideoRequest);
+            videoCancelBtn.addEventListener('click', closeVideoModal);
+            videoModalClose.addEventListener('click', closeVideoModal);
+            videoModal.addEventListener('click', e => {
+                if (e.target === videoModal) closeVideoModal();
+            });
         }
 
         // Update slide status indicator
@@ -1126,7 +1347,9 @@
                     
                     state.generatedImages.push({
                         url: imageBlobUrl,
+                        sourceUrl: item.url,
                         blob: imageBlob,
+                        type: 'image',
                         filename: `aquaverse-slide-${item.index}.png`,
                         prompt: item.prompt,
                         index: item.index,
@@ -1137,6 +1360,8 @@
                     console.error(`Failed to download image ${item.index}:`, err);
                     state.generatedImages.push({
                         url: null,
+                        sourceUrl: item.url,
+                        type: 'image',
                         prompt: item.prompt,
                         index: item.index,
                         error: err.message,
@@ -1168,7 +1393,6 @@
         }
 
         // Display results in the UI
-        // Display results in the UI
         function displayResults() {
             imagesGrid.innerHTML = '';
             
@@ -1181,29 +1405,85 @@
                 return;
             }
             
-            // Create image cards for each generated image
-            state.generatedImages.forEach(imageData => {
+            state.generatedImages.forEach((imageData, arrayIndex) => {
                 const card = document.createElement('div');
                 card.className = 'result-card';
+
+                const safePrompt = escapeHtml(imageData.prompt || '');
+                const hasImage = imageData.success && imageData.url;
+                const videoHtml = renderVideoStatus(imageData);
                 
                 card.innerHTML = `
-                    <img src="${imageData.url}" alt="Slide ${imageData.index}" class="result-image">
+                    ${hasImage
+                        ? `<img src="${imageData.url}" alt="Slide ${imageData.index}" class="result-image">`
+                        : `<div style="height:250px;display:flex;align-items:center;justify-content:center;color:var(--error);background:rgba(0,0,0,0.25);">Image failed</div>`
+                    }
                     <div class="result-info">
                         <h3>Slide ${imageData.index}</h3>
-                        <p class="result-prompt">${imageData.prompt}</p>
-                        ${imageData.error ? `<p class="error-text">⚠️ ${imageData.error}</p>` : ''}
-                        <button class="btn-download" onclick="downloadImage(${imageData.index - 1})">
-                            📥 Download
-                        </button>
+                        <p class="result-prompt">${safePrompt}</p>
+                        ${imageData.error ? `<p class="error-text">⚠️ ${escapeHtml(imageData.error)}</p>` : ''}
+                        <div class="result-actions">
+                            <button class="btn-download" onclick="downloadItem(${arrayIndex})" ${!hasImage ? 'disabled' : ''}>
+                                📥 Download
+                            </button>
+                            <button class="btn-video" onclick="openVideoModal(${arrayIndex})" ${!hasImage ? 'disabled' : ''}>
+                                🎬 Turn into Video
+                            </button>
+                        </div>
+                        <div id="video-status-${arrayIndex}">
+                            ${videoHtml}
+                        </div>
                     </div>
                 `;
                 
                 imagesGrid.appendChild(card);
             });
             
-            // Show results section
             resultsSection.classList.add('visible');
             resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderVideoStatus(imageData) {
+            if (!imageData.video) return '';
+
+            const video = imageData.video;
+            const safePrompt = escapeHtml(video.prompt || '');
+
+            if (video.status === 'completed' && video.url) {
+                return `
+                    <div class="video-status-box">
+                        <strong style="color: var(--success);">✅ Video ready</strong>
+                        <video class="video-preview" controls playsinline src="${video.url}"></video>
+                        <div class="video-meta">${video.lengthSeconds || ''}s video · ${safePrompt}</div>
+                        <div class="result-actions" style="margin-top: 10px;">
+                            <button class="btn-download" onclick="downloadVideo('${video.url}', 'aquaverse-video-slide-${imageData.index}.mp4')">📥 Download Video</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (video.status === 'failed') {
+                return `
+                    <div class="video-status-box">
+                        <strong style="color: var(--error);">❌ Video failed</strong>
+                        <div>${escapeHtml(video.error || 'Unknown error')}</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="video-status-box">
+                    <strong style="color: var(--accent-aqua);">🎬 Video ${escapeHtml(video.status || 'processing')}</strong>
+                    <div>${escapeHtml(video.message || 'Waiting for Supabase video asset...')}</div>
+                    <div class="video-meta">Request ID: ${escapeHtml(video.requestId || '')}</div>
+                </div>
+            `;
+        }
+
+        function refreshVideoStatus(arrayIndex) {
+            const holder = document.getElementById(`video-status-${arrayIndex}`);
+            if (!holder) return;
+            holder.innerHTML = renderVideoStatus(state.generatedImages[arrayIndex]);
         }
 
         // Show mock results for demo
@@ -1213,6 +1493,8 @@
                 
                 return {
                     url: mockUrl,
+                    sourceUrl: mockUrl,
+                    type: 'image',
                     prompt: slide.prompt || `Generated Image ${index + 1}`,
                     index: index + 1,
                     filename: `aquaverse-slide-${index + 1}.jpg`,
@@ -1221,6 +1503,335 @@
             });
             
             displayResults();
+        }
+
+        // Open modal for image-to-video
+        function openVideoModal(arrayIndex) {
+            const imageData = state.generatedImages[arrayIndex];
+            if (!imageData || !imageData.success || !imageData.url) {
+                showToast('Please choose a successfully generated image first', 'error');
+                return;
+            }
+
+            state.activeVideoImageIndex = arrayIndex;
+            videoModalImage.src = imageData.url;
+            videoPrompt.value = imageData.video?.prompt || `Create a realistic cinematic video from this image. Keep the influencer identity consistent, add natural movement, subtle camera motion, waterpark atmosphere, realistic lighting, and no distorted faces or extra limbs.`;
+            videoLength.value = String(imageData.video?.lengthSeconds || 10);
+            videoModal.classList.add('visible');
+            videoPrompt.focus();
+        }
+
+        function closeVideoModal() {
+            videoModal.classList.remove('visible');
+            state.activeVideoImageIndex = null;
+        }
+
+        async function submitVideoRequest() {
+            const arrayIndex = state.activeVideoImageIndex;
+            const imageData = state.generatedImages[arrayIndex];
+
+            if (!imageData) {
+                showToast('No image selected', 'error');
+                return;
+            }
+
+            const prompt = videoPrompt.value.trim();
+            const lengthSeconds = parseInt(videoLength.value, 10);
+            const imageUrlForApi = imageData.sourceUrl || imageData.remoteUrl || imageData.url;
+
+            if (!prompt) {
+                showToast('Please write a video prompt', 'error');
+                return;
+            }
+
+            if (!imageUrlForApi) {
+                showToast('No usable image URL found for video generation', 'error');
+                return;
+            }
+
+            videoSubmitBtn.disabled = true;
+            videoSubmitBtn.textContent = 'Submitting...';
+
+            try {
+                const payload = {
+                    requestType: 'image_to_video',
+                    provider: 'kie-ai',
+                    model: 'seedance',
+                    sourceImageUrl: imageUrlForApi,
+                    imageUrl: imageUrlForApi,
+                    slideIndex: imageData.index,
+                    imagePrompt: imageData.prompt,
+                    videoPrompt: prompt,
+                    prompt,
+                    lengthSeconds,
+                    duration: lengthSeconds
+                };
+
+                const response = await fetch(VIDEO_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Video webhook failed: ${response.status} ${response.statusText}`);
+                }
+
+                const responseData = await response.json();
+                const requestId = responseData.requestId || responseData.id || responseData.taskId || responseData.jobId;
+
+                if (!requestId) {
+                    throw new Error('No requestId received from video webhook');
+                }
+
+                imageData.video = {
+                    requestId,
+                    status: 'submitted',
+                    prompt,
+                    lengthSeconds,
+                    message: 'Submitted to video automation. Polling Supabase...'
+                };
+
+                refreshVideoStatus(arrayIndex);
+                closeVideoModal();
+                showToast(`🎬 Video submitted. Request ID: ${requestId}`, 'success');
+                pollVideoTaskStatus(arrayIndex, requestId);
+
+            } catch (error) {
+                console.error('Video generation error:', error);
+                showToast(`Video failed: ${error.message}`, 'error');
+            } finally {
+                videoSubmitBtn.disabled = false;
+                videoSubmitBtn.textContent = 'Generate Video';
+            }
+        }
+
+        async function pollVideoTaskStatus(arrayIndex, requestId) {
+            const pollKey = `${arrayIndex}:${requestId}`;
+            if (state.activeVideoPolls.has(pollKey)) return;
+            state.activeVideoPolls.add(pollKey);
+
+            let attempts = 0;
+
+            while (state.activeVideoPolls.has(pollKey)) {
+                attempts++;
+                const imageData = state.generatedImages[arrayIndex];
+                if (!imageData || !imageData.video || imageData.video.requestId !== requestId) {
+                    state.activeVideoPolls.delete(pollKey);
+                    return;
+                }
+
+                const elapsedMinutes = Math.floor((attempts * VIDEO_POLL_INTERVAL_MS) / 60000);
+                imageData.video.status = attempts === 1 ? 'processing' : imageData.video.status || 'processing';
+                imageData.video.message = `Polling Supabase every ${VIDEO_POLL_INTERVAL_MS / 1000}s... ${elapsedMinutes} min elapsed.`;
+                refreshVideoStatus(arrayIndex);
+
+                try {
+                    const taskData = await fetchVideoTaskFromSupabase(requestId);
+
+                    if (taskData) {
+                        const status = String(taskData.status || taskData.state || '').toLowerCase();
+                        const videoUrl = extractVideoUrl(taskData);
+
+                        if (videoUrl || status === 'completed' || status === 'success') {
+                            if (!videoUrl) {
+                                throw new Error('Video task is complete but no video URL was found in Supabase');
+                            }
+
+                            imageData.video.status = 'completed';
+                            imageData.video.url = videoUrl;
+                            imageData.video.message = 'Video ready';
+                            refreshVideoStatus(arrayIndex);
+                            state.activeVideoPolls.delete(pollKey);
+                            showToast(`✅ Video ready for Slide ${imageData.index}`, 'success');
+                            return;
+                        }
+
+                        if (status === 'failed' || status === 'error') {
+                            throw new Error(taskData.error_message || taskData.error || 'Video task failed');
+                        }
+
+                        imageData.video.status = status || 'processing';
+                        imageData.video.message = taskData.message || taskData.progress_message || imageData.video.message;
+                        refreshVideoStatus(arrayIndex);
+                    }
+
+                } catch (error) {
+                    console.warn(`Video poll attempt ${attempts} failed:`, error.message);
+
+                    // Keep polling for temporary Supabase/table misses, but stop if the task itself failed.
+                    if (String(error.message).toLowerCase().includes('task failed')) {
+                        imageData.video.status = 'failed';
+                        imageData.video.error = error.message;
+                        refreshVideoStatus(arrayIndex);
+                        state.activeVideoPolls.delete(pollKey);
+                        return;
+                    }
+                }
+
+                await new Promise(resolve => setTimeout(resolve, VIDEO_POLL_INTERVAL_MS));
+            }
+        }
+
+        async function fetchVideoTaskFromSupabase(requestId) {
+            // Your video workflow was copied from the image workflow, so it writes into
+            // the SAME table as image generation: carousel_tasks.
+            // Therefore this must be checked first.
+            const { data: carouselRow, error: carouselError } = await supabaseClient
+                .from(CAROUSEL_TASKS_TABLE)
+                .select('*')
+                .eq('id', requestId)
+                .maybeSingle();
+
+            if (!carouselError && carouselRow) {
+                console.log('Video poll found row in carousel_tasks:', carouselRow);
+                return carouselRow;
+            }
+
+            if (carouselError) {
+                console.warn('carousel_tasks video poll error:', carouselError.message);
+            }
+
+            // Fallback option 1: older version where videos were written to video_tasks.
+            const { data: taskRow, error: taskError } = await supabaseClient
+                .from(VIDEO_TASKS_TABLE)
+                .select('*')
+                .eq('id', requestId)
+                .maybeSingle();
+
+            if (!taskError && taskRow) {
+                console.log('Video poll found row in video_tasks:', taskRow);
+                return taskRow;
+            }
+
+            // Fallback option 2: asset table pattern.
+            const { data: assetRows, error: assetError } = await supabaseClient
+                .from(VIDEO_ASSETS_TABLE)
+                .select('*')
+                .or(`request_id.eq.${requestId},task_id.eq.${requestId},id.eq.${requestId}`)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (!assetError && assetRows && assetRows.length > 0) {
+                console.log('Video poll found row in generated_assets:', assetRows[0]);
+                return assetRows[0];
+            }
+
+            return null;
+        }
+
+        function extractVideoUrl(row) {
+            if (!row) return null;
+
+            // Direct video-specific columns.
+            const directKeys = [
+                'video_url',
+                'videoUrl',
+                'output_url',
+                'outputUrl',
+                'asset_url',
+                'assetUrl',
+                'public_url',
+                'publicUrl',
+                'file_url',
+                'fileUrl',
+                'download_url',
+                'downloadUrl',
+                'url'
+            ];
+
+            for (const key of directKeys) {
+                if (typeof row[key] === 'string' && row[key].trim()) {
+                    return row[key].trim();
+                }
+            }
+
+            // Same format as image generation: url_1, url_2, url_3...
+            // Since this is the VIDEO request row, url_1 should be the generated video.
+            for (let i = 1; i <= 12; i++) {
+                const key = `url_${i}`;
+                if (typeof row[key] === 'string' && row[key].trim()) {
+                    return row[key].trim();
+                }
+            }
+
+            // Some n8n/Kie nodes store output in JSON columns.
+            const nestedCandidates = [
+                row.data,
+                row.output,
+                row.result,
+                row.response,
+                row.body
+            ];
+
+            for (const candidate of nestedCandidates) {
+                const found = findFirstUrlInValue(candidate);
+                if (found) return found;
+            }
+
+            return null;
+        }
+
+        function findFirstUrlInValue(value) {
+            if (!value) return null;
+
+            if (typeof value === 'string') {
+                const trimmed = value.trim();
+
+                // If the field itself is a URL, return it.
+                if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+                // If it is JSON-as-text, try parsing.
+                try {
+                    return findFirstUrlInValue(JSON.parse(trimmed));
+                } catch (_) {
+                    return null;
+                }
+            }
+
+            if (Array.isArray(value)) {
+                for (const item of value) {
+                    const found = findFirstUrlInValue(item);
+                    if (found) return found;
+                }
+                return null;
+            }
+
+            if (typeof value === 'object') {
+                const preferredKeys = [
+                    'video_url',
+                    'videoUrl',
+                    'output_url',
+                    'outputUrl',
+                    'url',
+                    'file_url',
+                    'fileUrl',
+                    'public_url',
+                    'publicUrl'
+                ];
+
+                for (const key of preferredKeys) {
+                    const found = findFirstUrlInValue(value[key]);
+                    if (found) return found;
+                }
+
+                for (const key of Object.keys(value)) {
+                    const found = findFirstUrlInValue(value[key]);
+                    if (found) return found;
+                }
+            }
+
+            return null;
+        }
+
+        function downloadVideo(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename || 'aquaverse-video.mp4';
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         // Download a single item
@@ -1293,6 +1904,8 @@
 
         // Clear results
         function clearResults() {
+            state.activeVideoPolls.clear();
+
             // Revoke object URLs to free memory
             state.generatedImages.forEach(item => {
                 if (item.url && item.url.startsWith('blob:')) {
